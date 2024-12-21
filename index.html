@@ -147,6 +147,8 @@
         const $bars = document.querySelectorAll('.bar');
         const $percentages = document.querySelectorAll('.percentage');
 
+        const COLORS = [ 'green', 'yellow', 'orange', 'red'];
+
         
 
         async function runTest({ code, data }) {
@@ -168,7 +170,8 @@
         }
         async function runTestCases() {
             const $testCases = document.querySelectorAll('.test-case');
-            $bars.forEach(bar => bar.setAttribute('height', 0))
+            $bars.forEach(bar => bar.setAttribute('height', 0));
+            $percentages.forEach(p => p.textContent = '');
             const globalCode = $globalCode.value;
 
             const promises = Array.from($testCases).map(async (testCase, index) => {
@@ -186,19 +189,27 @@
             })
 
             const results = await Promise.all(promises);
-            console.log(results)
+            
             
 
             const maxOps = Math.max(...results);
+            const sortedResults = results
+            .map((result, index) => ({ result, index }))
+            .sort((a, b) => b.result - a.result)
+            
 
             results.forEach((result, index) => {
                 const bar = $bars[index];
                 const percentage = $percentages[index];
-                console.log(percentage)
+                const indexColor = sortedResults.findIndex(x => x.index === index)
+
+                const color = COLORS[indexColor];
+                
 
                 const height = result / maxOps * 300; // 300 is the height of the chart
 
                 bar.setAttribute('height', height);
+                bar.setAttribute('fill', color);
                 
                 
 
