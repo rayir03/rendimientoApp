@@ -16,12 +16,26 @@
             padding: 16px;
         }
 
-        .constainer {
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            gap: 32px;
+            justify-content: center;
+
+        }
+
+        @media (max-width: 768px ) {
+            .container {
+                flex-direction: column;
+            }
+        }
+
+        .content {
             display: flex;
             flex-direction: column;
             gap: 16px;
-            max-width: 1280px;
-            margin: 0 auto;
+            
 
             h2 {
                 font-size: 12px;
@@ -98,62 +112,192 @@
              }
 
         }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            .chart {
+                width: 200px;
+                height: 300px;
+            }
+
+            .bar {
+                
+                transform: scale(1, -1);
+               transition: height .3s ease; 
+               
+            }
+
+            .percentages {
+                opacity: .5;
+                display: flex;
+                font-size: 10px;
+                justify-content: space-between;
+                gap: 32px;
+                margin-top: 16px;
+            }
+        }
     </style>
+    <script type="module">
+        
+        const $globalCode = document.querySelector('#global');
+        const $sendButton = document.querySelector('.send-button');
+        const $bars = document.querySelectorAll('.bar');
+        const $percentages = document.querySelectorAll('.percentage');
+
+        
+
+        async function runTest({ code, data }) {
+            
+
+            const worker = new Worker('worker.js');
+            worker.postMessage({code, data, duration: 1000 })
+            // return new Promise(resolve => {
+
+            //     worker.onmessage = event => {
+            //         resolve(event.data)
+            //     }
+            // })
+
+            const { resolve, promise } = Promise.withResolvers()
+            worker.onmessage = event => { resolve(event.data) }
+            return promise
+
+        }
+        async function runTestCases() {
+            const $testCases = document.querySelectorAll('.test-case');
+            $bars.forEach(bar => bar.setAttribute('height', 0))
+            const globalCode = $globalCode.value;
+
+            const promises = Array.from($testCases).map(async (testCase, index) => {
+                const $code = testCase.querySelector('.code')
+                const $ops = testCase.querySelector('.ops');
+
+                const codeValue = $code.value;
+                $ops.textContent = 'Loading...'
+                
+
+                const result = await runTest({ code: codeValue, data: globalCode })
+                $ops.textContent = `${result.toLocaleString()} ops/s`;
+
+                return result;
+            })
+
+            const results = await Promise.all(promises);
+            console.log(results)
+            
+
+            const maxOps = Math.max(...results);
+
+            results.forEach((result, index) => {
+                const bar = $bars[index];
+                const percentage = $percentages[index];
+                console.log(percentage)
+
+                const height = result / maxOps * 300; // 300 is the height of the chart
+
+                bar.setAttribute('height', height);
+                
+                
+
+                const percentageValue = Math.round(result / maxOps * 100);
+
+                percentage.textContent = `${percentageValue}%`;
+
+            })
+
+           
+            
+            // donde ocurre la magia
+
+        }
+
+
+        // run test cases on init 
+        runTestCases();
+
+        $sendButton.addEventListener('click', () => {
+            runTestCases()
+            
+        })
+        
+    </script>
 </head>
 <body>
     <main class="container">
-        <h2>Global</h2>
-        <textarea id="global" class="code" rows="1">
-            const data = [ ...Array(1000).keys()]
-        </textarea>
-        <h2>Test Cases</h2>
-        <div class="test-cases">
-            <article class="test-case">
-                <header>
-                    <span class="test-id">1</span>
-                    <span class="ops">203,360 ops/s</span>
+        <div class="content">
 
-                </header>
-                <textarea class="code" rows="1">
-                    data.find(x => x == 100)
-                </textarea>
-            </article>
-
-            <article class="test-case">
-                <header>
-                    <span class="test-id">2</span>
-                    <span class="ops">150,360 ops/s</span>
-
-                </header>
-                <textarea class="code" rows="1">
-                    data.find(x => x == 200)
-                </textarea>
-            </article>
-
-            <article class="test-case">
-                <header>
-                    <span class="test-id">3</span>
-                    <span class="ops">103,360 ops/s</span>
-
-                </header>
-                <textarea class="code" rows="1">
-                    data.find(x => x == 400)
-                </textarea>
-            </article>
-
-            <article class="test-case">
-                <header>
-                    <span class="test-id">4</span>
-                    <span class="ops">50,360 ops/s</span>
-
-                </header>
-                <textarea class="code" rows="1">
-                    data.find(x => x == 800)
-                </textarea>
-            </article>
+            <h2>Global</h2>
+            <textarea id="global" class="code" rows="1">
+                const data = [ ...Array(1000).keys()]
+            </textarea>
+            <h2>Test Cases</h2>
+            <div class="test-cases">
+                <article class="test-case">
+                    <header>
+                        <span class="test-id">1</span>
+                        <span class="ops"></span>
+    
+                    </header>
+                    <textarea class="code" rows="1">
+                        data.find(x => x == 100)
+                    </textarea>
+                </article>
+    
+                <article class="test-case">
+                    <header>
+                        <span class="test-id">2</span>
+                        <span class="ops"></span>
+    
+                    </header>
+                    <textarea class="code" rows="1">
+                        data.find(x => x == 200)
+                    </textarea>
+                </article>
+    
+                <article class="test-case">
+                    <header>
+                        <span class="test-id">3</span>
+                        <span class="ops"></span>
+    
+                    </header>
+                    <textarea class="code" rows="1">
+                        data.find(x => x == 400)
+                    </textarea>
+                </article>
+    
+                <article class="test-case">
+                    <header>
+                        <span class="test-id">4</span>
+                        <span class="ops"></span>
+    
+                    </header>
+                    <textarea class="code" rows="1">
+                        data.find(x => x == 800)
+                    </textarea>
+                </article>
+            </div>
+    
+            <button class="send-button">Benchmark code!</button>
         </div>
 
-        <button class="send-button">Benchmark code! 🚀</button>
+        <div class="chart-container">
+            <svg class="chart" viewBox="0 0 200 300">
+                <rect class="bar" x="20" y="-300" width="2" height="1" fill="green"></rect>
+                <rect class="bar" x="70" y="-300" width="2" height="1" fill="yellow"></rect>
+                <rect class="bar" x="120" y="-300" width="2" height="1" fill="orange"></rect>
+                <rect class="bar" x="170" y="-300" width="2" height="1" fill="red"></rect>
+            </svg>
+
+            <div class="percentages">
+                <div class="percentage"></div>
+                <div class="percentage"></div>
+                <div class="percentage"></div>
+                <div class="percentage"></div>
+            </div>
+        </div>
     </main>
 </body>
 </html>
